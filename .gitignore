@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+workshop.log
+.claude/settings.local.json

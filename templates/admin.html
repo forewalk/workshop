@@ -1,0 +1,164 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">
+                        <i class="fas fa-cogs"></i> 관리자 페이지
+                    </h2>
+                    <a href="/admin/logout" class="btn btn-outline-dark">
+                        <i class="fas fa-sign-out-alt"></i> 로그아웃
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="successMessage" class="alert alert-success d-none">
+                        <i class="fas fa-check-circle"></i> <span id="successText"></span>
+                    </div>
+                    <div id="errorMessage" class="alert alert-danger d-none">
+                        <i class="fas fa-exclamation-circle"></i> <span id="errorText"></span>
+                    </div>
+                    
+                    <h4 class="mb-3">마일리지 관리</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>사용자명</th>
+                                    <th>현재 마일리지</th>
+                                    <th>마일리지 조정</th>
+                                    <th>액션</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for username in mileage_data.keys() %}
+                                <tr id="row-{{ username }}">
+                                    <td>{{ username }}</td>
+                                    <td>
+                                        <span class="badge bg-primary mileage-display" id="mileage-{{ username }}">
+                                            {{ mileage_data[username] }}점
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm" style="width: 200px;">
+                                            <input type="number" class="form-control" id="points-{{ username }}" placeholder="±점수">
+                                            <span class="input-group-text">점</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-success btn-sm me-1" onclick="updateMileage('{{ username }}', 'add')">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="updateMileage('{{ username }}', 'subtract')">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function updateMileage(username, action) {
+    const pointsInput = document.getElementById(`points-${username}`);
+    const points = parseInt(pointsInput.value);
+    
+    if (!points || points === 0) {
+        showMessage('error', '점수를 입력해주세요.');
+        return;
+    }
+    
+    const finalPoints = action === 'subtract' ? -Math.abs(points) : Math.abs(points);
+    
+    try {
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('points', finalPoints);
+        
+        const response = await fetch('/admin/update-mileage', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // 화면의 마일리지 업데이트
+            const mileageDisplay = document.getElementById(`mileage-${username}`);
+            mileageDisplay.textContent = `${data.new_mileage}점`;
+            
+            // 입력 필드 초기화
+            pointsInput.value = '';
+            
+            showMessage('success', data.message);
+        } else {
+            showMessage('error', data.detail || '마일리지 업데이트에 실패했습니다.');
+        }
+    } catch (error) {
+        showMessage('error', '서버 오류가 발생했습니다.');
+    }
+}
+
+function showMessage(type, text) {
+    const successDiv = document.getElementById('successMessage');
+    const errorDiv = document.getElementById('errorMessage');
+    const successText = document.getElementById('successText');
+    const errorText = document.getElementById('errorText');
+    
+    // 모든 메시지 숨기기
+    successDiv.classList.add('d-none');
+    errorDiv.classList.add('d-none');
+    
+    if (type === 'success') {
+        successText.textContent = text;
+        successDiv.classList.remove('d-none');
+    } else {
+        errorText.textContent = text;
+        errorDiv.classList.remove('d-none');
+    }
+    
+    // 3초 후 메시지 자동 숨기기
+    setTimeout(() => {
+        successDiv.classList.add('d-none');
+        errorDiv.classList.add('d-none');
+    }, 3000);
+}
+
+// Enter 키로 마일리지 추가
+document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && e.target.id.startsWith('points-')) {
+        const username = e.target.id.replace('points-', '');
+        updateMileage(username, 'add');
+    }
+});
+</script>
+
+<style>
+.table th {
+    border-top: none;
+}
+.mileage-display {
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+}
+.input-group-sm .form-control {
+    font-size: 0.875rem;
+}
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    .input-group {
+        width: 150px !important;
+    }
+}
+</style>
+{% endblock %} 

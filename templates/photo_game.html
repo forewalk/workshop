@@ -1,0 +1,310 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0">사진 맞추기 게임 <small class="float-end">마일리지: {{ mileage }} 포인트</small></h2>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info mb-4">
+            <h4><i class="fas fa-info-circle"></i> 게임 규칙</h4>
+            <ul class="mb-0">
+                <li>성+이름을 붙여서 정답을 적어주세요.</li>
+                <li>동명이인이 있을 수 있습니다.</li>
+                <li>사진의 각 부분을 클릭하면 100포인트를 사용하여 해당 부분을 볼 수 있습니다.</li>
+                <li>정답 도전시 300포인트가 차감됩니다.</li>
+                <li>정답시 1000포인트를 획득합니다.</li>
+            </ul>
+        </div>
+
+        <div class="row">
+            {% for photo_user, photo_url in photos.items() %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">사진 {{ loop.index }}</h5>
+                        
+                        <!-- 사진 그리드 -->
+                        <div class="photo-container" data-user="{{ photo_user }}" data-url="{{ photo_url }}">
+                            <div class="photo-grid">
+                                {% for y in range(5) %}
+                                    {% for x in range(5) %}
+                                    <div class="grid-cell" data-x="{{ x }}" data-y="{{ y }}"></div>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- 정답자 목록 -->
+                        {% if photo_user in correct_guesses %}
+                        <div class="alert alert-success mt-3">
+                            <strong>정답자:</strong>
+                            {% for correct_user in correct_guesses[photo_user] %}
+                            <br>- {{ correct_user }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 오답자 목록 -->
+                        {% if photo_user in wrong_guesses %}
+                        <div class="alert alert-danger mt-3">
+                            <strong>오답자:</strong>
+                            {% for wrong_guess in wrong_guesses[photo_user] %}
+                            <br>- {{ wrong_guess.user }} ({{ wrong_guess.guess }})
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 정답 입력 폼 -->
+                        {% if photo_user not in correct_guesses or correct_guesses[photo_user]|length == 0 %}
+                        <div class="mt-3">
+                            <div class="input-group">
+                                <input type="text" class="form-control guess-input" 
+                                       placeholder="이름을 입력하세요" data-user="{{ photo_user }}">
+                                <button type="button" class="btn btn-primary guess-btn" 
+                                        data-user="{{ photo_user }}">
+                                    도전 (300P)
+                                </button>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="mt-3">
+                            <div class="alert alert-warning">
+                                이미 정답이 맞춰진 사진입니다.
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.photo-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    margin-bottom: 1rem;
+}
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 2px;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    padding: 2px;
+}
+
+.grid-cell {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.grid-cell::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #000;
+    transition: background-color 0.3s ease;
+    z-index: 1;
+}
+
+.grid-cell:not(.revealed):hover::before {
+    background-color: #333;
+}
+
+.grid-cell.revealed::before {
+    display: none;
+}
+
+.float-end {
+    float: right;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('사진 맞추기 게임 시작');
+    
+    let currentMileage = parseInt('{{ mileage }}');
+    
+    // 마일리지 업데이트 함수
+    function updateMileage(newMileage) {
+        currentMileage = newMileage;
+        document.querySelector('.card-header h2 small').textContent = '마일리지: ' + newMileage + ' 포인트';
+    }
+    
+    // 모든 사진 컨테이너 설정
+    document.querySelectorAll('.photo-container').forEach(container => {
+        const photoUser = container.dataset.user;
+        const photoUrl = container.dataset.url;
+        const grid = container.querySelector('.photo-grid');
+        const cells = grid.querySelectorAll('.grid-cell');
+        
+                 console.log('사진 설정: ' + photoUser + ', URL: ' + photoUrl);
+        
+                 // 각 셀에 배경 이미지와 클릭 이벤트 설정
+         cells.forEach(cell => {
+             const x = parseInt(cell.dataset.x);
+             const y = parseInt(cell.dataset.y);
+             
+             // 모든 셀에 배경 이미지 설정 (가림막 뒤에 숨어있음)
+             cell.style.backgroundImage = 'url(' + photoUrl + ')';
+             cell.style.backgroundSize = '500%'; // 5x5 그리드이므로 500%
+             cell.style.backgroundPosition = (-x * 100) + '% ' + (-y * 100) + '%';
+             
+             // 이미 공개된 셀인지 확인 (revealed_cells에 있거나 정답을 맞춘 사진인 경우)
+             const cellKey = photoUser + ':' + x + ':' + y;
+             const revealedCells = JSON.parse('{{ revealed_cells|tojson|safe }}');
+             const correctGuesses = JSON.parse('{{ correct_guesses|tojson|safe }}');
+             
+             // 정답을 맞춘 사진이거나 개별적으로 공개된 셀인 경우 공개
+             if (revealedCells[cellKey] || (correctGuesses[photoUser] && correctGuesses[photoUser].length > 0)) {
+                 cell.classList.add('revealed');
+             }
+            
+            // 클릭 이벤트
+            cell.addEventListener('click', function() {
+                if (cell.classList.contains('revealed')) {
+                    return;
+                }
+                
+                // 이미 정답을 맞춘 사진인지 확인
+                if (correctGuesses[photoUser] && correctGuesses[photoUser].length > 0) {
+                    alert('이미 다른 사람이 맞춘 사진입니다.');
+                    return;
+                }
+                
+                if (currentMileage < 100) {
+                    alert('포인트가 부족합니다. (필요: 100포인트)');
+                    return;
+                }
+                
+                if (!confirm('이 부분을 공개하시겠습니까? (100 포인트가 차감됩니다)')) {
+                    return;
+                }
+                
+                // 서버에 셀 공개 요청
+                fetch('/reveal-cell', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        target_user: photoUser,
+                        x: x,
+                        y: y
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        cell.classList.add('revealed');
+                        updateMileage(data.mileage);
+                        alert('셀이 공개되었습니다. (100 포인트 차감)');
+                    } else {
+                        alert(data.detail || '오류가 발생했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('오류가 발생했습니다.');
+                });
+            });
+        });
+    });
+    
+    // 도전 버튼 이벤트
+    document.querySelectorAll('.guess-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const photoUser = button.dataset.user;
+                         const input = document.querySelector('.guess-input[data-user="' + photoUser + '"]');
+            const guess = input.value.trim();
+            
+            if (!guess) {
+                alert('이름을 입력해주세요.');
+                return;
+            }
+            
+            if (currentMileage < 300) {
+                alert('포인트가 부족합니다. (필요: 300포인트)');
+                return;
+            }
+            
+            if (!confirm('도전하시겠습니까? (300 포인트가 차감됩니다)')) {
+                return;
+            }
+            
+            // 서버에 정답 도전 요청
+            fetch('/guess-photo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    target_user: photoUser,
+                    guess: guess
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateMileage(data.mileage);
+                alert(data.message);
+                
+                                 if (data.correct) {
+                     // 정답인 경우 전체 사진 공개
+                     const container = document.querySelector('.photo-container[data-user="' + photoUser + '"]');
+                     const cells = container.querySelectorAll('.grid-cell');
+                     cells.forEach(cell => {
+                         cell.classList.add('revealed');
+                     });
+                     
+                     // 정답자 목록 추가
+                     const cardBody = button.closest('.card-body');
+                     let successAlert = cardBody.querySelector('.alert-success');
+                     if (!successAlert) {
+                         successAlert = document.createElement('div');
+                         successAlert.className = 'alert alert-success mt-3';
+                         successAlert.innerHTML = '<strong>정답자:</strong>';
+                         cardBody.insertBefore(successAlert, button.parentElement.parentElement);
+                     }
+                     successAlert.innerHTML += '<br>- {{ user }}';
+                     
+                     // 입력 폼 제거
+                     button.parentElement.parentElement.remove();
+                } else {
+                    // 오답인 경우 오답자 목록 추가
+                    const cardBody = button.closest('.card-body');
+                    let wrongAlert = cardBody.querySelector('.alert-danger');
+                    if (!wrongAlert) {
+                        wrongAlert = document.createElement('div');
+                        wrongAlert.className = 'alert alert-danger mt-3';
+                        wrongAlert.innerHTML = '<strong>오답자:</strong>';
+                        cardBody.insertBefore(wrongAlert, button.parentElement.parentElement);
+                    }
+                    wrongAlert.innerHTML += '<br>- {{ user }} (' + guess + ')';
+                    
+                    // 입력 필드 초기화
+                    input.value = '';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다.');
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

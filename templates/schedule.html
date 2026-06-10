@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="mb-0">스케쥴</h2>
+    </div>
+    <div class="card-body">
+        <div class="timeline">
+            {% for time, event in schedule.items() %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ time }}</h5>
+                    {% if event is string %}
+                        <p class="card-text">{{ event | replace('\n', '<br>') | safe }}</p>
+                    {% else %}
+                        {% for item in event %}
+                            <p class="card-text">{{ item }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline .card {
+    position: relative;
+    border-left: 4px solid #3498db;
+    margin-left: 20px;
+}
+
+.timeline .card::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 20px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #3498db;
+}
+
+.timeline .card-title {
+    color: #2c3e50;
+    font-weight: bold;
+}
+</style>
+{% endblock %} 

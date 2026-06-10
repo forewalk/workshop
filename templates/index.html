@@ -1,0 +1,217 @@
+{% extends "layout.html" %}
+
+{% block content %}
+{% if user %}
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0">{{ user }}님 환영합니다! <small class="float-end">마일리지: {{ mileage }} 포인트</small></h2>
+    </div>
+    <div class="card-body">
+        <a href="/logout" class="btn btn-outline-danger">로그아웃</a>
+    </div>
+</div>
+{% else %}
+<div class="card mb-4">
+    <div class="card-header bg-secondary text-white">
+        <h2 class="mb-0">로그인</h2>
+    </div>
+    <div class="card-body">
+        {% if error_message %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-circle"></i> {{ error_message }}
+        </div>
+        {% endif %}
+        <div id="loginError" class="alert alert-danger d-none">
+            <i class="fas fa-exclamation-circle"></i> <span id="errorMessage"></span>
+        </div>
+        <form id="loginForm" class="mb-3">
+            <div class="mb-3">
+                <label for="username" class="form-label">사용자명</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">비밀번호</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">로그인</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="mb-0">차량이동 (올때/갈때)</h2>
+    </div>
+    <div class="card-body">
+        <h3>장소</h3>
+        <p class="lead">{{ location }}</p>
+        <a href="https://goldvalley.co.kr/Reservation/?idx=77" target="_blank" class="btn btn-outline-primary mb-4">
+            펜션 상세정보 보기 <i class="fas fa-external-link-alt ms-1"></i>
+        </a>
+
+        <h3 class="mt-4">차량 배차</h3>
+        {% for driver, passengers in cars.items() %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{ driver }}</h5>
+                <ul class="list-group list-group-flush">
+                    {% for passenger in passengers %}
+                    <li class="list-group-item">{{ passenger }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h2 class="mb-0">체크리스트</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h4 class="mb-0">🛒 장보기 (차량별)</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="sub-card mb-3">
+                            <h5 class="text-danger">🚗 김민재 차량 - 마트 장보기(25만원)</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">삼겹살+목살 = 4kg (한명당 200g 기준)</li>
+                                <li class="list-group-item">소시지, 파, 꼬치, 새우</li>
+                                <li class="list-group-item">양파, 버섯, 상추, 깻잎</li>
+                                <li class="list-group-item">김치, 햇반, 컵라면, 밀키트</li>
+                                <li class="list-group-item">치즈, 감자, 고구마, <s>과자</s></li>
+                                <li class="list-group-item">생수(500ml, 2L), 음료수, 소주, 캔맥주</li>
+                            </ul>
+                        </div>
+                        <div class="sub-card">
+                            <h5 class="text-info">🚙 김장훈 차량 - 다이소 장보기(15만원)</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">종이컵, 젓가락, 포크</li>
+                                <li class="list-group-item">일회용접시, 키친타올, 물티슈</li>
+                                <li class="list-group-item">부탄가스(토치용), <s>석쇠</s>, 숯</li>
+                                <li class="list-group-item">휴지, <s>제기</s>, <s>눈가리기x7</s></li>
+                                <li class="list-group-item">스케치북x25, <s>주사위(뒤집기)</s></li>
+                                <li class="list-group-item"><s>배드민턴x2</s>, <s>족구공x1</s></li>
+                                <li class="list-group-item">천원짜리 쓰레기통x7, <s>대야x1</s></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">🎒 준비물</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="sub-card mb-3">
+                            <h5 class="text-primary">📷 기록</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><s>마이크</s></li>
+                                <li class="list-group-item"><s>AUX 스피커</s></li>
+                                <li class="list-group-item">카메라 / 액션캠</li>
+                                <li class="list-group-item"><s>멀티탭</s></li>
+                            </ul>
+                        </div>
+                        <div class="sub-card">
+                            <h5 class="text-primary">👤 개인 준비물</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">개인 세면도구 (칫솔, 면도기, 클렌징 등)</li>
+                                <li class="list-group-item"><span style="color: red;">여벌옷(필수)</span>, 양말, 속옷, 잠옷, 수건</li>
+                                <li class="list-group-item">운동화/슬리퍼</li>
+                                <li class="list-group-item">개인 약 (지병/소화제/두통약 등)</li>
+                                <li class="list-group-item">우비/우산 (비 예보시)</li>
+                                <li class="list-group-item">귀마개, 안대 (수면 예민한 사람용)</li>
+                                <li class="list-group-item">자외선 차단제, 썬크림</li>
+                                <li class="list-group-item">벌레퇴치제, 물파스</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card-header h4 {
+    font-size: 1.2rem;
+    margin: 0;
+}
+.list-group-item {
+    font-size: 0.95rem;
+}
+.sub-card {
+    border: 1px solid rgba(0,0,0,0.125);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.sub-card h5 {
+    margin-bottom: 1rem;
+}
+.sub-card:last-child {
+    margin-bottom: 0;
+}
+@media (max-width: 768px) {
+    .card-header h4 {
+        font-size: 1.1rem;
+    }
+    .list-group-item {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+    .sub-card {
+        padding: 0.75rem;
+    }
+}
+.float-end {
+    float: right;
+}
+.alert {
+    margin-bottom: 1rem;
+}
+.d-none {
+    display: none;
+}
+</style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<script>
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const errorDiv = document.getElementById('loginError');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (response.ok) {
+            errorDiv.classList.add('d-none');
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                window.location.reload();
+            }
+        } else {
+            errorDiv.classList.remove('d-none');
+            errorMessage.textContent = data.detail || '로그인에 실패했습니다.';
+        }
+    } catch (error) {
+        errorDiv.classList.remove('d-none');
+        errorMessage.textContent = '로그인 처리 중 오류가 발생했습니다.';
+    }
+});
+</script>
+{% endblock %} 

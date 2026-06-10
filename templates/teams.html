@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="mb-0">팀 배치 및 점수</h2>
+    </div>
+    <div class="card-body">
+        {% for team_name, members in teams.items() %}
+            {% if team_name != "진행" %}
+            <div class="card mb-4 team-card team-{{ loop.index }}">
+                <div class="card-header text-white">
+                    <h4 class="mb-0">
+                        {{ team_name }}
+                        <span class="float-end">
+                            <small>평균: {{ team_averages.get(team_name, 0) }}점</small>
+                        </span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        {% for member in members %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ member }}
+                            <span class="badge bg-primary rounded-pill">{{ mileage_data.get(member, 0) }}점</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+        
+        <div class="card mb-4 team-card team-leader">
+            <div class="card-header text-white">
+                <h4 class="mb-0">진행</h4>
+            </div>
+            <div class="card-body">
+                <p class="lead mb-0">{{ teams["진행"] }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.team-card {
+    transition: transform 0.2s;
+}
+.team-card:hover {
+    transform: translateY(-5px);
+}
+.team-1 .card-header {
+    background-color: #3498db;
+}
+.team-2 .card-header {
+    background-color: #e74c3c;
+}
+.team-3 .card-header {
+    background-color: #2ecc71;
+}
+.team-leader .card-header {
+    background-color: #f39c12;
+}
+.float-end {
+    float: right;
+    text-align: right;
+}
+.badge {
+    font-size: 0.9rem;
+}
+@media (max-width: 768px) {
+    .card {
+        margin: 0.5rem;
+    }
+    .card-body {
+        padding: 1rem;
+    }
+    .list-group-item {
+        padding: 0.5rem;
+    }
+    .float-end {
+        float: none;
+        display: block;
+        font-size: 0.8rem;
+        text-align: right;
+        margin-top: 0.5rem;
+    }
+    .badge {
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %} 
